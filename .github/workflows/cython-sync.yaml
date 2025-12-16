@@ -1,0 +1,90 @@
+name: Cython Sync Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: 'Python version to use'
+        required: false
+        type: string
+        default: '3.10'
+      prod-branch:
+        description: 'Production branch name'
+        required: false
+        type: string
+        default: 'prod'
+    secrets:
+      PAT_TOKEN:
+        required: true 
+
+jobs:
+  compile-and-sync:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository (main branch)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.PAT_TOKEN }}  
+      
+      - name: 🔧 Set up Python ${{ inputs.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ inputs.python-version }}
+      
+      - name: 📦 Install Cython and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install cython setuptools wheel
+          
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+      
+      - name: 📥 Checkout CI scripts repository
+        uses: actions/checkout@v4
+        with:
+          repository: orangewood-co/ci-scripts
+          path: .ci-scripts
+          token: ${{ secrets.PAT_TOKEN }}  
+      
+      - name: 🔍 Detect changed Python files
+        run: |
+          python3 .ci-scripts/scripts/detect_changes.py
+      
+      - name: 🔨 Compile Python files to Cython .so
+        run: |
+          chmod +x .ci-scripts/scripts/compile_to_cython.sh
+          .ci-scripts/scripts/compile_to_cython.sh
+      
+      - name: 🔄 Sync to prod branch
+        run: |
+          chmod +x .ci-scripts/scripts/sync_to_prod.sh
+          .ci-scripts/scripts/sync_to_prod.sh
+      
+      - name: 💾 Commit and push to prod
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          
+          if [ -n "$(git status --porcelain)" ]; then
+            git add .
+            MAIN_COMMIT_MSG=$(git log origin/main -1 --pretty=%B)
+            git commit -m "🤖 Auto-sync from main: $MAIN_COMMIT_MSG"
+            git push origin ${{ inputs.prod-branch }}
+            echo "✅ Successfully synced to ${{ inputs.prod-branch }} branch"
+          else
+            echo "ℹ️  No changes to commit"
+          fi
+      
+      - name: 📊 Summary
+        if: always()
+        run: |
+          echo "### Sync Summary 📋" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source Branch:** main" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Branch:** ${{ inputs.prod-branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Python Version:** ${{ inputs.python-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
