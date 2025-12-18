@@ -72,12 +72,23 @@ EOF
     if python3 "$BUILD_DIR/setup_temp.py" build_ext --build-lib "$DIST_DIR/$dir_path" > /dev/null 2>&1; then
         echo -e "${GREEN}  ✓ Compiled successfully${NC}"
         
+        # Remove generated .c file
+        c_file="${py_file%.py}.c"
+        if [ -f "$c_file" ]; then
+            rm "$c_file"
+        fi
+        
         # Copy __init__.py if it exists (needed for Python packages)
         if [ "$file_name" != "__init__.py" ] && [ -f "$dir_path/__init__.py" ]; then
             cp "$dir_path/__init__.py" "$DIST_DIR/$dir_path/" 2>/dev/null || true
         fi
     else
         echo -e "${RED}  ✗ Compilation failed${NC}"
+        # Clean up .c file even on failure
+        c_file="${py_file%.py}.c"
+        if [ -f "$c_file" ]; then
+            rm "$c_file"
+        fi
         # Don't exit, continue with other files
     fi
     
