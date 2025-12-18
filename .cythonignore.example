@@ -1,0 +1,60 @@
+# .cythonignore - Exclude files from Cython compilation and prod sync
+#
+# This file specifies which Python files should NOT be compiled to Cython .so files
+# and synced to the prod branch, even if they are changed in the main branch.
+#
+# SYNTAX:
+# -------
+# - Exact file paths:         path/to/file.py
+# - Wildcard patterns:        test_*.py, *_test.py
+# - Directory patterns:       tests/, examples/
+# - Comments:                 Lines starting with # are ignored
+# - Blank lines:              Also ignored
+#
+# EXAMPLES:
+# ---------
+# Exclude specific files:
+#   setup.py
+#   config/local_settings.py
+#
+# Exclude by pattern:
+#   test_*.py              # All files starting with test_
+#   *_test.py              # All files ending with _test.py
+#   conftest.py            # Pytest configuration files
+#
+# Exclude entire directories:
+#   tests/                 # All files in tests directory
+#   examples/              # All files in examples directory
+#   scripts/               # All files in scripts directory
+#
+# Common exclusions below - uncomment as needed:
+# -----------------------------------------------
+
+# Configuration and setup files
+# setup.py
+# config.py
+# settings.py
+
+# Test files
+# test_*.py
+# *_test.py
+# tests/
+# conftest.py
+
+# Example and demo files
+# examples/
+# demo_*.py
+# example_*.py
+
+# Development scripts
+# scripts/
+# tools/
+# dev/
+
+# Documentation and utilities
+# docs/
+# utils/dev_*.py
+
+# Build and CI files
+# build.py
+# deploy.py
