@@ -93,6 +93,33 @@ def get_changed_files():
         excluded_deleted = original_deleted - len(deleted_files)
         if excluded_changed > 0:
             print(f"Excluded {excluded_changed} changed file(s) based on .cythonignore")
+        if excluded_deleted > 0:
+            print(f"Excluded {excluded_deleted} deleted file(s) based on .cythonignore")
+    
+    # Separate files into bypass and compile lists
+    files_to_compile = []
+    files_to_bypass = []
+    deleted_files_compiled = []
+    deleted_files_bypass = []
+    
+    for f in changed_files:
+        if bypass_patterns and is_excluded(f, bypass_patterns):
+            files_to_bypass.append(f)
+        else:
+            files_to_compile.append(f)
+    
+    for f in deleted_files:
+        if bypass_patterns and is_excluded(f, bypass_patterns):
+            deleted_files_bypass.append(f)
+        else:
+            deleted_files_compiled.append(f)
+    
+    if files_to_bypass:
+        print(f"Bypassing Cython for {len(files_to_bypass)} file(s) - will sync as .py")
+    
+    return files_to_compile, files_to_bypass, deleted_files_compiled, deleted_files_bypass
+
+
 def main():
     files_to_compile, files_to_bypass, deleted_compiled, deleted_bypass = get_changed_files()
     
@@ -135,33 +162,6 @@ def main():
     if deleted_bypass:
         print("\nBypass files to remove from prod:")
         for f in deleted_bypass:
-            print(f"  - {f}")ass.append(f)
-        else:
-            deleted_files_compiled.append(f)
-    
-    if files_to_bypass:
-        print(f"Bypassing Cython for {len(files_to_bypass)} file(s) - will sync as .py")
-    
-    return files_to_compile, files_to_bypass, deleted_files_compiled, deleted_files_bypass
-
-
-def main():
-    changed, deleted = get_changed_files()
-    # Write changed files to output
-    with open('changed_files.txt', 'w') as f:
-        f.write('\n'.join(changed))
-    # Write deleted files to output
-    with open('deleted_files.txt', 'w') as f:
-        f.write('\n'.join(deleted))
-    print(f"Changed/Added: {len(changed)} files")
-    print(f"Deleted: {len(deleted)} files")
-    if changed:
-        print("\nFiles to compile:")
-        for f in changed:
-            print(f"  - {f}")
-    if deleted:
-        print("\nFiles to remove from prod:")
-        for f in deleted:
             print(f"  - {f}")
 
 
