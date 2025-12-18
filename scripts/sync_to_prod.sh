@@ -3,6 +3,8 @@ set -e
 
 DIST_DIR="dist_so"
 DELETED_FILES="deleted_files.txt"
+BYPASS_FILES="bypass_files.txt"
+DELETED_BYPASS_FILES="deleted_bypass_files.txt"
 
 # Colors
 GREEN='\033[0;32m'
@@ -45,9 +47,27 @@ if [ -d "$DIST_DIR" ]; then
     done
 fi
 
-# Handle deleted files
+# Sync bypass files (direct .py copy)
+if [ -f "$BYPASS_FILES" ] && [ -s "$BYPASS_FILES" ]; then
+    echo "Copying bypass files directly as .py..."
+    
+    while IFS= read -r py_file; do
+        if [ -z "$py_file" ]; then
+            continue
+        fi
+        
+        # Switch back to main to get the file
+        git checkout main -- "$py_file" 2>/dev/null || true
+        
+        if [ -f "$py_file" ]; then
+            echo -e "${YELLOW}  ✓ Bypassed (copied as .py): $py_file${NC}"
+        fi
+    done < "$BYPASS_FILES"
+fi
+
+# Handle deleted compiled files
 if [ -f "$DELETED_FILES" ] && [ -s "$DELETED_FILES" ]; then
-    echo "Removing deleted files from prod..."
+    echo "Removing deleted compiled files from prod..."
     
     while IFS= read -r deleted_py; do
         if [ -z "$deleted_py" ]; then
@@ -67,8 +87,24 @@ if [ -f "$DELETED_FILES" ] && [ -s "$DELETED_FILES" ]; then
     done < "$DELETED_FILES"
 fi
 
+# Handle deleted bypass files
+if [ -f "$DELETED_BYPASS_FILES" ] && [ -s "$DELETED_BYPASS_FILES" ]; then
+    echo "Removing deleted bypass files from prod..."
+    
+    while IFS= read -r deleted_py; do
+        if [ -z "$deleted_py" ]; then
+            continue
+        fi
+        
+        if [ -f "$deleted_py" ]; then
+            git rm "$deleted_py" 2>/dev/null || rm -f "$deleted_py"
+            echo -e "${YELLOW}  ✓ Removed: $deleted_py${NC}"
+        fi
+    done < "$DELETED_BYPASS_FILES"
+fi
+
 # Clean up build artifacts
-rm -rf "$DIST_DIR" build_cython changed_files.txt deleted_files.txt
+rm -rf "$DIST_DIR" build_cython changed_files.txt deleted_files.txt bypass_files.txt deleted_bypass_files.txt
 
 echo -e "${GREEN}=== Sync Complete ===${NC}"
 

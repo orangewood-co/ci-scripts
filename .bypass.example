@@ -1,0 +1,54 @@
+# .bypass - Sync Python files directly to prod WITHOUT Cython compilation
+#
+# This file specifies which Python files should be synced to prod as .py files
+# instead of being compiled to .so files. These files will bypass Cython compilation
+# entirely and be copied directly to the prod branch.
+#
+# SYNTAX:
+# -------
+# - Exact file paths:         path/to/file.py
+# - Wildcard patterns:        config_*.py, *_settings.py
+# - Directory patterns:       config/, scripts/
+# - Comments:                 Lines starting with # are ignored
+# - Blank lines:              Also ignored
+#
+# EXAMPLES:
+# ---------
+# Bypass specific files:
+#   setup.py
+#   config/settings.py
+#   __init__.py
+#
+# Bypass by pattern:
+#   config_*.py            # All files starting with config_
+#   *_settings.py          # All files ending with _settings.py
+#   __init__.py            # Package initialization files
+#
+# Bypass entire directories:
+#   config/                # All files in config directory
+#   scripts/               # All files in scripts directory
+#   migrations/            # All files in migrations directory
+#
+# Common bypass patterns below - uncomment as needed:
+# ----------------------------------------------------
+
+# Configuration files (often need to remain editable in prod)
+# config/
+# settings.py
+# config.py
+
+# Package initialization files (usually minimal and not worth compiling)
+# **/__init__.py
+
+# Migration files (should remain as Python for clarity)
+# migrations/
+# **/migrations/
+
+# CLI and script files (often need to be readable)
+# cli/
+# scripts/
+
+# Version or metadata files
+# __version__.py
+# _version.py
+# __about__.py
