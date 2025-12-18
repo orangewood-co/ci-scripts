@@ -14,7 +14,7 @@ on:
         type: string
         default: 'prod'
     secrets:
-      PAT_TOKEN:
+      AUTH_TOKEN:
         required: true 
 
 jobs:
@@ -27,7 +27,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          token: ${{ secrets.PAT_TOKEN }}  
+          token: ${{ secrets.AUTH_TOKEN }}  
       
       - name: 🔧 Set up Python ${{ inputs.python-version }}
         uses: actions/setup-python@v4
@@ -48,7 +48,7 @@ jobs:
         with:
           repository: orangewood-co/ci-scripts
           path: .ci-scripts
-          token: ${{ secrets.PAT_TOKEN }}  
+          token: ${{ secrets.AUTH_TOKEN }}  
       
       - name: 🔍 Detect changed Python files
         run: |
@@ -87,4 +87,7 @@ jobs:
           echo "- **Source Branch:** main" >> $GITHUB_STEP_SUMMARY
           echo "- **Target Branch:** ${{ inputs.prod-branch }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Python Version:** ${{ inputs.python-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered By:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
