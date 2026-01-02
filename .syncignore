@@ -1,0 +1,11 @@
+# .syncignore - Files that should NOT be synced from main to prod
+# These files exist differently in main vs prod, or only in prod
+
+# CMake files
+CMakeLists.txt
+**/CMakeLists.txt
+
+# ROS package files
+package.xml
+**/package.xml
+

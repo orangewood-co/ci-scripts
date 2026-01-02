@@ -5,11 +5,14 @@ DIST_DIR="dist_so"
 DELETED_FILES="deleted_files.txt"
 BYPASS_FILES="bypass_files.txt"
 DELETED_BYPASS_FILES="deleted_bypass_files.txt"
+NON_PYTHON_FILES="non_python_files.txt"
+DELETED_NON_PYTHON_FILES="deleted_non_python_files.txt"
 
 # Colors
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
 YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
 echo -e "${BLUE}=== Syncing to Prod Branch ===${NC}"
@@ -21,7 +24,7 @@ git checkout prod
 
 # Sync compiled .so files
 if [ -d "$DIST_DIR" ]; then
-    echo "Copying .so files to prod branch..."
+    echo -e "${BLUE}Copying .so files to prod branch...${NC}"
     
     # Find all .so files in dist directory
     find "$DIST_DIR" -name "*.so" | while read -r so_file; do
@@ -49,7 +52,7 @@ fi
 
 # Sync bypass files (direct .py copy)
 if [ -f "$BYPASS_FILES" ] && [ -s "$BYPASS_FILES" ]; then
-    echo "Copying bypass files directly as .py..."
+    echo -e "${BLUE}Copying bypass files directly as .py...${NC}"
     
     while IFS= read -r py_file; do
         if [ -z "$py_file" ]; then
@@ -65,9 +68,31 @@ if [ -f "$BYPASS_FILES" ] && [ -s "$BYPASS_FILES" ]; then
     done < "$BYPASS_FILES"
 fi
 
+# Sync non-Python files directly from main
+if [ -f "$NON_PYTHON_FILES" ] && [ -s "$NON_PYTHON_FILES" ]; then
+    echo -e "${BLUE}Syncing non-Python files from main...${NC}"
+    
+    while IFS= read -r file; do
+        if [ -z "$file" ]; then
+            continue
+        fi
+        
+        # Create directory if needed
+        target_dir=$(dirname "$file")
+        mkdir -p "$target_dir"
+        
+        # Checkout file from main
+        git checkout main -- "$file" 2>/dev/null || true
+        
+        if [ -f "$file" ]; then
+            echo -e "${CYAN}  ✓ Synced: $file${NC}"
+        fi
+    done < "$NON_PYTHON_FILES"
+fi
+
 # Handle deleted compiled files
 if [ -f "$DELETED_FILES" ] && [ -s "$DELETED_FILES" ]; then
-    echo "Removing deleted compiled files from prod..."
+    echo -e "${BLUE}Removing deleted compiled files from prod...${NC}"
     
     while IFS= read -r deleted_py; do
         if [ -z "$deleted_py" ]; then
@@ -89,7 +114,7 @@ fi
 
 # Handle deleted bypass files
 if [ -f "$DELETED_BYPASS_FILES" ] && [ -s "$DELETED_BYPASS_FILES" ]; then
-    echo "Removing deleted bypass files from prod..."
+    echo -e "${BLUE}Removing deleted bypass files from prod...${NC}"
     
     while IFS= read -r deleted_py; do
         if [ -z "$deleted_py" ]; then
@@ -103,8 +128,23 @@ if [ -f "$DELETED_BYPASS_FILES" ] && [ -s "$DELETED_BYPASS_FILES" ]; then
     done < "$DELETED_BYPASS_FILES"
 fi
 
-# Clean up build artifacts
-rm -rf "$DIST_DIR" build_cython changed_files.txt deleted_files.txt bypass_files.txt deleted_bypass_files.txt
+# Handle deleted non-Python files
+if [ -f "$DELETED_NON_PYTHON_FILES" ] && [ -s "$DELETED_NON_PYTHON_FILES" ]; then
+    echo -e "${BLUE}Removing deleted non-Python files from prod...${NC}"
+    
+    while IFS= read -r deleted_file; do
+        if [ -z "$deleted_file" ]; then
+            continue
+        fi
+        
+        if [ -f "$deleted_file" ]; then
+            git rm "$deleted_file" 2>/dev/null || rm -f "$deleted_file"
+            echo -e "${YELLOW}  ✓ Removed: $deleted_file${NC}"
+        fi
+    done < "$DELETED_NON_PYTHON_FILES"
+fi
+
+# Clean up build artifacts and tracking files
+rm -rf "$DIST_DIR" build_cython changed_files.txt deleted_files.txt bypass_files.txt deleted_bypass_files.txt non_python_files.txt deleted_non_python_files.txt
 
 echo -e "${GREEN}=== Sync Complete ===${NC}"
-
