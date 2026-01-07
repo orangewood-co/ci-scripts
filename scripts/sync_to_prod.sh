@@ -21,7 +21,7 @@ echo -e "${BLUE}=== Syncing to Prod Branch ===${NC}"
 echo "Switching to prod branch after stashing..."
 git fetch origin prod:prod 2>/dev/null || true
 git stash 
-git checkout prod
+git checkout -f prod
 
 echo -e "${GREEN}Switched to prod branch.${NC}"
 git stash pop || true
