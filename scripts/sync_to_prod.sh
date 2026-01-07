@@ -18,9 +18,13 @@ NC='\033[0m'
 echo -e "${BLUE}=== Syncing to Prod Branch ===${NC}"
 
 # Checkout prod branch
-echo "Switching to prod branch..."
+echo "Switching to prod branch after stashing..."
 git fetch origin prod:prod 2>/dev/null || true
+git stash 
 git checkout prod
+
+echo -e "${GREEN}Switched to prod branch.${NC}"
+git stash pop || true
 
 # Sync compiled .so files
 if [ -d "$DIST_DIR" ]; then
